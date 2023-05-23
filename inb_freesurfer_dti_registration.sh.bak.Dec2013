@@ -1,0 +1,277 @@
+#!/bin/bash
+source `which my_do_cmd`
+
+subject=$1
+useFSL=0
+fakeflag=""
+print_help()
+{
+echo "
+`basename $0` <subjid> [options]
+
+Options:
+-b0                        Register T1 against b0 (default is to FA)
+-iterations <intxintxint>  Default is 8x4x0
+-fsl                       Use fsl instead of ANTS for registration.
+-fake
+
+# these files MUST exist
+t1    : \$SUBJECTS_DIR/\$subject/mri/brain.mgz
+dti   : \$SUBJECTS_DIR/\$subject/dti/dti.nii
+bval  : \$SUBJECTS_DIR/\$subject/dti/dti.bval
+bvec  : \$SUBJECTS_DIR/\$subject/dti/dti.bvec
+
+# these files may exist 
+(if they do not exist, then the inb_freesurfer_mrtrix_proc.sh pipeline is executed).
+b0    : \$SUBJECTS_DIR/\$subject/dti/dti_b0.nii
+b0mask: \$SUBJECTS_DIR/\$subject/dti/dti_mask.nii
+fa    : \$SUBJECTS_DIR/\$subject/dti/dti_fa
+
+At this moment, the nifti files must be uncompressed, to ensure mrtrix compatibility.
+
+Luis Concha
+INB
+2012
+"
+
+}
+
+
+if [ $# -lt 1 ] 
+then
+  echo "  ERROR: Need more arguments..."
+  print_help
+  exit 1
+fi
+
+
+reg_to_b0=0
+iterations=8x4x0
+
+declare -i i
+i=1
+for arg in "$@"
+do
+  case "$arg" in
+  -h|-help) 
+    print_help
+    exit 1
+  ;;
+  -b0)
+    reg_to_b0=1
+  ;;
+  -iterations)
+    nextarg=`expr $i + 1`
+    eval iterations=\${${nextarg}}
+  ;; 
+  -fsl)
+    useFSL=1
+  ;;
+  -fake)
+    fakeflag="-fake"
+    echo "Just a fake!"
+  ;;
+  esac
+  i=$[$i+1]
+done
+
+
+
+
+
+FSLOUTPUTTYPE=NIFTI
+
+
+
+# these MUST exist
+t1=$SUBJECTS_DIR/$subject/mri/brain.mgz
+dti=$SUBJECTS_DIR/$subject/dti/dti.nii
+bval=$SUBJECTS_DIR/$subject/dti/dti.bval
+bvec=$SUBJECTS_DIR/$subject/dti/dti.bvec
+
+
+# these may exist
+b0=$SUBJECTS_DIR/$subject/dti/dti_b0.nii
+b0mask=$SUBJECTS_DIR/$subject/dti/dti_mask.nii
+fa=$SUBJECTS_DIR/$subject/dti/dti_fa
+
+
+
+tmpDir=/tmp/dtireg/${subject}/$$/
+mkdir -p $tmpDir
+
+
+
+
+
+if [ ! -f $b0 ]
+then
+  echo " | Extract the b=0 image"
+  idx=`transpose_table.sh $bval | grep -n ^0 | awk -F: '{print $1}' | head -n 1`
+  my_do_cmd $fakeflag fslroi $dti $b0 $(( $idx - 1 )) 1
+fi
+
+if [ ! -f $b0mask ]
+then
+  my_do_cmd $fakeflag bet $b0 $b0mask -f 0.25
+fi
+
+
+if [ $reg_to_b0 -eq 1 ]
+then
+  b0masked=$SUBJECTS_DIR/$subject/dti/nodif_masked.nii
+  my_do_cmd $fakeflag fslmaths $b0mask -bin -mul $b0 $b0masked
+fi
+
+
+if [ `imtest $fa` -eq 0 ]
+then
+  echo " | Computing tensor"
+  my_do_cmd $fakeflag inb_mrtrix_proc.sh \
+			$dti \
+			${dti%.nii}_encoding.b \
+			$SUBJECTS_DIR/$subject/dti/dti \
+			-nii -noCSD
+fi
+
+
+
+
+# erode the FA map a little
+my_do_cmd $fakeflag fslmaths $b0mask -ero -ero ${tmpDir}/b0mask_eroded.nii
+my_do_cmd $fakeflag fslmaths -dt float $fakeflag $fa -mul ${tmpDir}/b0mask_eroded.nii ${tmpDir}/fa_eroded.nii -odt float
+cp -v ${tmpDir}/b0mask_eroded.nii $SUBJECTS_DIR/$subject/dti/dti_b0mask_eroded.nii
+fa=${tmpDir}/fa_eroded.nii
+
+
+
+echo " | Prepare files for registration"
+my_do_cmd $fakeflag mri_convert $t1 ${tmpDir}/t1.nii
+t1=${tmpDir}/t1.nii
+my_do_cmd $fakeflag bet $t1 ${tmpDir}/t1_bet.nii
+t1=${tmpDir}/t1_bet.nii
+my_do_cmd $fakeflag fslreorient2std $t1 ${tmpDir}/t1_bet_r.nii
+t1=${tmpDir}/t1_bet_r.nii
+my_do_cmd $fakeflag fslreorient2std $fa ${tmpDir}/fa_bet_r.nii
+fa=${tmpDir}/fa_bet_r.nii
+
+TARGET=$fa
+if [ $reg_to_b0 -eq 1 ]
+then
+  my_do_cmd $fakeflag fslreorient2std $b0masked ${tmpDir}/b0_bet_r.nii
+  b0masked=${tmpDir}/b0_bet_r.nii
+  TARGET=$b0masked
+fi
+
+
+if [ $useFSL -eq 0 ]
+then
+  echo " | Coregister the t1 to the FA using a non-linear transform."
+  outbase=$SUBJECTS_DIR/$subject/dti/ants_t1_to_fa
+  if [ -f ${outbase}Warpxvec.nii.gz ]
+  then
+    echo "  Warp found: ${outbase}Warpxvec.nii.gz"
+    echo "  Not overwriting"
+  else
+    my_do_cmd $fakeflag ANTS 3 \
+      -m  MI[$TARGET,$t1,1,32] \
+      -t  SyN[1,2,0.05] \
+      --geodesic 2  \
+      -r Gauss[3,0.] \
+      -o $outbase \
+      -i $iterations \
+      --use-Histogram-Matching  \
+      --number-of-affine-iterations 10000x10000x10000x10000x10000 \
+      --MI-option 32x16000
+  fi
+
+  # Resample the t1 to DTI native space
+  my_do_cmd $fakeflag WarpImageMultiTransform 3 \
+    $t1 \
+    $SUBJECTS_DIR/$subject/dti/t1_native_dti_space.nii \
+    ${outbase}Warp.nii.gz ${outbase}Affine.txt  \
+    -R $fa
+
+
+  # Resample the automatic parcellation to DTI native space
+  for segmentation in aparc.a2009s+aseg aparc+aseg
+  do
+    my_do_cmd $fakeflag mri_convert $SUBJECTS_DIR/$subject/mri/${segmentation}.mgz \
+				    ${tmpDir}/aparc.nii
+    my_do_cmd $fakeflag WarpImageMultiTransform 3 \
+      ${tmpDir}/aparc.nii \
+      $SUBJECTS_DIR/$subject/dti/${segmentation}_native_dti_space.nii \
+      ${outbase}Warp.nii.gz ${outbase}Affine.txt  \
+      -R $fa \
+      --use-NN
+  done
+fi
+
+if [ $useFSL -eq 1 ]
+then
+  echo "Using fsl for registration: Not implemented yet"
+  TARGET=$fa
+  outbase=$SUBJECTS_DIR/$subject/dti/fsl
+  aff_fa_to_t1=${outbase}_fa_to_t1.mat
+  warp_fa_to_t1=${outbase}_fa_to_t1_warp
+  warp_t1_to_fa=${outbase}_t1_to_fa_warp
+  if [ -f $aff_fa_to_t1 ]
+  then
+    echo "Warning, file exists: $aff_fa_to_t1"
+  else
+    my_do_cmd $fakeflag flirt \
+    -in $TARGET \
+    -ref $t1 \
+    -omat $aff_fa_to_t1
+  fi
+
+  if [ `imtest $warp_fa_to_t1` -gt 0 ]
+  then
+    echo "Warning, file exists: $warp_fa_to_t1"
+  else
+    my_do_cmd $fakeflag fnirt \
+    --ref=$t1 \
+    --in=$TARGET \
+    --aff=$aff_fa_to_t1 \
+    --cout=$warp_fa_to_t1 \
+    --iout=${outbase}fa_to_t1
+  fi
+
+  if [ `imtest $warp_t1_to_fa` -gt 0 ]
+  then
+    echo "Warning, file exists: $warp_t1_to_fa"
+  else
+    my_do_cmd $fakeflag invwarp \
+    --warp=$warp_fa_to_t1 \
+    --out=$warp_t1_to_fa \
+    --ref=$TARGET
+  fi
+
+    my_do_cmd $fakeflag applywarp \
+    -r $TARGET \
+    -i $t1 \
+    -o ${outbase}_t1_to_fa \
+    -w $warp_t1_to_fa
+
+  for segmentation in aparc.a2009s+aseg aparc+aseg
+  do
+    my_do_cmd $fakeflag mri_convert $SUBJECTS_DIR/$subject/mri/${segmentation}.mgz \
+				    ${tmpDir}/aparc.nii
+    my_do_cmd $fakeflag applywarp \
+    -r $TARGET \
+    -i ${tmpDir}/aparc.nii \
+    -o $SUBJECTS_DIR/$subject/dti/${segmentation}_native_dti_space.nii \
+    -w $warp_t1_to_fa
+  done
+fi
+
+# Do a quality check
+my_do_cmd $fakeflag slicer \
+  $SUBJECTS_DIR/$subject/dti/dti_fa \
+  $SUBJECTS_DIR/$subject/dti/t1_native_dti_space.nii \
+  -i 0 1 \
+  -a $SUBJECTS_DIR/$subject/dti/ants_registration_qcheck.png
+
+
+
+rm -fR $tmpDir

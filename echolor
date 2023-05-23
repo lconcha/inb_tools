@@ -1,0 +1,83 @@
+#!/bin/bash
+
+color=$1
+msg=$2
+
+
+
+print_help()
+{
+  
+ echo "
+
+  `basename $0` <color> <Message>
+
+
+Print to screen using a particular color.
+Use quotes if Message contains space characters.
+
+examples:
+echolor red '"'This text is red'"'
+echolor bold '"'This text is bold'"'
+
+
+Available colors:
+red, green, yellow, blue, magenta, cyan, orange, bold, reverse.
+
+LU15 (0N(H4
+(inspired by Raúl Rodríguez Cruces)
+lconcha@unam.mx
+INB, UNAM
+August, 2017
+"
+}
+
+
+
+if [ $# -lt 2 ] 
+then
+	echo " ERROR: Need more arguments..."
+	print_help
+	exit 1
+fi
+
+
+
+
+
+
+reset="\e[0m"
+
+
+case $color in
+ red)
+  colorflag="\e[31m"
+ ;;
+ green)
+  colorflag="\e[32m"
+ ;;
+ yellow)
+  colorflag="\e[33m"
+ ;;
+ blue)
+  colorflag="\e[34m"
+ ;;
+ magenta)
+  colorflag="\e[35m"
+ ;;
+ cyan)
+  colorflag="\e[36m"
+ ;;
+ orange)
+  colorflag="\e[38;5;202m"
+ ;;
+ bold)
+  colorflag="\e[1m"
+ ;;
+ reverse)
+  colorflag="\e[7m"
+ ;;
+esac
+
+str="$colorflag $msg $reset"
+echo -e "$str"

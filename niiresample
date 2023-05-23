@@ -1,0 +1,36 @@
+#!/bin/bash
+source ~/noelsoft/BashTools/my_do_cmd
+
+
+like=$1
+in=$2
+out=$3
+
+
+rString=`random_string`
+tmpDir=/tmp/niiresample_$rString
+mkdir $tmpDir
+
+#gunzip $like $in
+#like=${like%.gz}
+#in=${in%.gz}
+
+#nii2mnc 
+
+
+
+my_do_cmd niigz2mncgz $like ${tmpDir}/like.mnc.gz
+my_do_cmd niigz2mncgz $in ${tmpDir}/in.mnc.gz
+
+my_do_cmd mincresample -like ${tmpDir}/like.mnc.gz -nearest_neighbour ${tmpDir}/in.mnc.gz ${tmpDir}/out.mnc
+my_do_cmd gzip ${tmpDir}/out.mnc
+
+my_do_cmd mncgz2niigz ${tmpDir}/out.mnc.gz $out
+
+
+
+
+rm -fR $tmpDir
+
+
+

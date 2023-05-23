@@ -1,0 +1,63 @@
+#!/bin/bash
+#
+# This function was first imagined and implemented by Thomas Mansi
+#
+# All I did was make it more global, so that you can call it from any script.
+# To do so, in your script you must first source this file:
+#
+# source ${fullpath}/my_do_cmd
+# This is the equivalent of perl's usepackage, python's use, or C++'s include.
+#
+#
+# Then you can call your command by pre-pending do_cmd, as in:
+#
+# do_cmd mincinfo yourfile.mnc
+#
+# Important note: If your command has quotes at some points, this will not work properly,
+# as is the case with minccalc -expr "some_expresion".
+#
+# LU15 (0N(H4
+# INB, 2011.
+
+
+
+my_do_cmd()
+{
+   logfile=/dev/null
+   ifFake=""
+   stderr=1
+   local l_command=""
+   local l_sep=""
+   local l_index=1
+   while [ ${l_index} -le $# ]; do
+    eval arg=\${$l_index}
+    if [ "$arg" = "-fake" ]; then
+      isFake=1
+      arg=""
+    fi
+    if [ "$arg" = "-no_stderr" ]; then
+      stderr=0
+      arg=""
+    fi
+    if [ "$arg" == "-log" ]; then
+      nextarg=`expr ${l_index} + 1`
+      eval logfile=\${${nextarg}}
+      arg=""
+      l_index=$[${l_index}+1]
+    fi
+    l_command="${l_command}${l_sep}${arg}"
+    l_sep=" "
+    l_index=$[${l_index}+1]
+   done
+   echo "  --> ${log_header} ${l_command}" | tee -a $logfile
+
+
+  if [ -z $isFake ]
+  then
+    if [ $stderr -eq 1 ]; then
+      $l_command 2>&1 | tee -a $logfile
+    else
+      $l_command | tee -a $logfile
+    fi
+  fi
+}

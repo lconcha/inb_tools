@@ -1,0 +1,55 @@
+#!/bin/bash
+
+
+
+
+print_help()
+{
+echo "
+`basename $0` data.nii.gz rois.nii.gz roi_idx stats
+
+	data.nii.gz : The file from which we want stats
+	rois.nii.gz : A file with several ROIs drawn, each one with a different voxel value (ints)
+	roi_idx     : The voxel value of the ROI that we want
+	stats	    : The list of statistics we want, as in fslstats options. 
+		      If using more than one switch, put it between quotes, as in the example.
+
+
+ Example :
+	`basename $0` data.nii.gz rois.nii.gz 4 \"-m -s -c\"
+
+
+ Luis Concha
+ INB, March 2011
+
+"
+}
+
+
+
+
+if [ $# -lt 1 ] 
+then
+	echo " ERROR: Need more arguments..."
+	print_help
+	exit 1
+fi
+
+rString=`random_string`
+tmpDir=/tmp/fslstats_rois_$rString
+
+data=$1
+rois=$2
+roi_idx=$3
+stats=$4
+
+
+mkdir $tmpDir
+
+mask=${tmpDir}/mask.nii.gz
+fslmaths $rois -thr $roi_idx -uthr $roi_idx $mask
+fslstats $data -k $mask $4
+
+
+rm -fR $tmpDir
+

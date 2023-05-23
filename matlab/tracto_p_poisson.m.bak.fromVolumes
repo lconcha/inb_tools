@@ -1,0 +1,68 @@
+function p = tracto_p_poisson(seed_map,mu_map,v_null_map,p_thresh,areFileNames,niftiOut)
+%Probability of connectivity of any given tract. Is it more than chance?
+%
+%function p = tracto_p_poisson(mu_map,v_null_map,areFileNames,niftiOut)
+%
+%   mu_map    : A visitation count map. 
+%               You get this in mrtrix with tracks2prob (do not use the
+%               -fraction switch, you need the integers).
+%   v_null_map: The visitation count map of a null distribution (isotropic
+%               diffusion voxels), multiplied by the number of seeds used
+%               in mu_map (n), divided by the number of seeds used in the null
+%               experiment (n'). n' >> n. 
+%
+%
+% Adapted from:
+% Morris, Embleton and Parker. 
+% Probabilistic fibre tracking: Differentiation of connections from chance events.
+% Neuroimage 42, 1329-1339. 2008.
+%
+% Adapted by Luis Concha with amazing help from Leopoldo Gonzalez Santos.
+% Instituto de Neurobiología, Universidad Nacional Autonoma de México.
+% October, 2012.
+
+writeNifti = true;
+if nargin < 5
+   areFileNames = false; 
+   writeNifti   = false;
+   p_thresh     = 0.05;
+end
+if nargin < 4
+   p_thresh     = 0.05;
+end
+
+
+if areFileNames
+    fprintf(1,'  Loading %s\n',seed_map);
+    [hdr,seed_map]      = niak_read_nifti(seed_map);
+    fprintf(1,'  Loading %s\n',mu_map);
+    [hdr,mu_map]      = niak_read_nifti(mu_map);
+    fprintf(1,'  Loading %s\n',v_null_map);
+    [hdr,v_null_map]  = niak_read_nifti(v_null_map); 
+end
+
+% remove any voxels in which the p of connection to the seed can only be
+% explained by chance alone.
+mask = mu_map > v_null_map;
+
+p = ones(size(mu_map));
+
+p(mask) = poisspdf((mu_map(mask)),(v_null_map(mask)));
+
+% put back the seed with p=0
+index_seed = find(seed_map > 0);
+p(index_seed) = 0;
+
+% find disconnected voxels
+[L,n] = bwlabeln(p < p_thresh);
+seed_label_value = L(index_seed(1));
+p(L~=seed_label_value) = 1;
+
+
+
+
+if writeNifti
+    fprintf(1,'  Writing %s\n',niftiOut);
+    hdr.file_name = niftiOut;
+    niak_write_nifti(hdr,single(p));
+end

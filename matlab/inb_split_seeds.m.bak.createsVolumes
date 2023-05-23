@@ -1,0 +1,20 @@
+function inb_split_seeds(seeds_vol_fname,output_base)
+
+[hdr,seeds]  = niak_read_nifti(seeds_vol_fname);
+
+index = find(seeds > 0);
+nVoxels = length(index);
+fprintf(1,'There are %d seed voxels\n',nVoxels);
+
+[r,c,s] = ind2sub(size(seeds),index);
+
+fprintf(1,'Saving');
+for v = 1 : nVoxels
+   one_seed_vol = zeros(size(seeds));
+   one_seed_vol(r(v),c(v),s(v)) = 1;
+   hdr.file_name = [output_base '_' num2str(v,'%07.0f') '.nii'];
+   niak_write_nifti(hdr,one_seed_vol);
+   fprintf(1,'.');
+   %gzip(hdr.file_name);
+end
+fprintf(1,'\nDone.\n');

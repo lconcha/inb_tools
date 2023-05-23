@@ -1,0 +1,190 @@
+#!/bin/bash
+# Una funcion para convertir una superficie de freesurfer a vtk, junto con uno o mas datos asociados.
+#
+# Luis Concha y Leopoldo Gonzalez
+# INB, UNAM
+# Mayo, 2010
+
+
+#########################################################################
+# Esta es una funcion para mostrar que comando esta corriendo
+do_cmd() 
+{
+   local log_header="  CMD:  "
+   local l_command=""
+   local l_sep=""
+   local l_index=1
+   while [ ${l_index} -le $# ]; do
+     eval arg=\${$l_index}
+     l_command="${l_command}${l_sep}${arg}"
+     l_sep=" "
+     l_index=$[${l_index}+1]
+   done
+   echo "${log_header} ${l_command}"
+   $l_command
+}
+
+
+# Por si hay que ver como se usa
+print_help() {
+echo ""
+echo "`basename $0` <-data data1.mgh dataName1> \ "
+echo "              [-data data2.mgh dataName2] \ "
+echo "              [-data data3.mgh dataName3] \ "
+echo "              <-surf lh.inflated> \ "
+echo "              <-vtk out.vtk> "
+echo
+echo " Una funcion para convertir una superficie de freesurfer a vtk, junto con uno o mas datos asociados."
+echo
+echo "Luis Concha y Leopoldo Gonzalez"
+echo "INB, UNAM"
+echo "Mayo, 2010"
+}
+
+
+
+# Por si no se puso ningun argumento
+if [ $# -lt 1 ] 
+then
+	print_help
+	exit 1
+fi
+
+
+# Checamos los argumentos de la funcion
+# dataFilesList=""
+# dataNamesList=""
+declare -i i
+i=1
+declare -i id
+id=0
+for arg in "$@"
+do
+   case "$arg" in
+	-help)
+	  print_help
+	  exit 1
+	;;
+        -data)
+	  nextarg=`expr $i + 1`
+	  eval thisDataFile=\${${nextarg}}
+    	  dataFilesList[$id]=$thisDataFile
+    	  nextarg=`expr $i + 2`
+	  eval thisDataName=\${${nextarg}}
+    	  dataNamesList[$id]=$thisDataName
+    	  ids[$id]=$id
+    	  id=`expr $id + 1`    	  
+	;;
+	-surf)
+	  nextarg=`expr $i + 1`
+	  eval surf=\${${nextarg}}
+	;;
+	-vtk)
+	  nextarg=`expr $i + 1`
+	  eval vtk=\${${nextarg}}
+	;;
+   esac
+   i=`expr $i + 1`
+done
+
+
+#########################################################################
+
+
+
+#########################
+# Mostramos que va a pasar
+#########################
+echo "
+    surface:        $surf
+    vtk:            $vtk
+"
+echo "    Data to write:"
+for f in ${ids[*]}
+do
+  thisName=${dataNamesList[$f]}
+  thisFile=${dataFilesList[$f]}
+  echo "        $f)   $thisName   --> $thisFile"
+done
+
+
+
+#########################
+# para recibir archivos temporales, al final los borraremos
+#########################
+toDelete=""
+
+surfName=`basename $surf`
+surfDir=`dirname $surf`
+# hay que saber que hemisferio es, para poder hacer los links de los datos
+hemisphere=`echo $surfName | awk -F. '{print $1}'`
+
+#########################
+# preparamos archivos temporales
+#########################
+#surfVTK es el archivo VTI (en ascii), tiene solo la superficie, no los datos
+surfVTK=/tmp/$$vtK_SURFACE_NODATA.vtk
+#dataFile es un archivo temporal donde iremos poniendo los datos asociados, de uno por uno.
+dataFile=/tmp/$$allDataValues.txt
+toDelete="$toDelete $surfVTK $dataFile"
+touch $dataFile
+# surfASCII es donde mris_convert va a ir poniendo los datos asociados, y de ahi los vamos a agarrar
+surfASCII=/tmp/$$.asc
+toDelete="$toDelete $surfASCII"
+
+
+#########################
+# Hacemos la superficie vtk
+do_cmd mris_convert $surf $surfVTK
+#########################
+
+
+
+
+#########################
+# Y ahora si nos vamos por los datos
+#########################
+declare -i i
+i=1
+# for v in $dataFilesList
+# do
+for f in ${ids[*]}
+do
+ thisName=${dataNamesList[$f]}
+ v=${dataFilesList[$f]}
+ # hacemos un link para que mris_convert pueda agarrar los datos
+ linkName=${hemisphere}.${thisName}
+ do_cmd ln -s $v $linkName
+ do_cmd mris_convert -c $v $surf $surfASCII
+ toDelete="$toDelete $linkName"
+ nVerts=`wc -l $surfASCII | awk '{print $1}'`
+ 
+ # agarramos los datos asociads, y les hacemos un pequeno header
+ if [ $i -eq 1 ]
+ then
+   echo "POINT_DATA $nVerts"   >> $dataFile
+ fi
+ echo "Writing data $thisName : $v"
+ echo "SCALARS $thisName float"     >> $dataFile
+ echo "LOOKUP_TABLE default" >> $dataFile
+ awk '{print $5}' $surfASCII >> $dataFile
+ 
+ i=`expr $i + 1`
+done
+
+#########################
+# pegamos la superficie vtk con sus datos asociados
+#########################
+echo "  CMD:   cat $surfVTK $dataFile > $vtk"
+cat $surfVTK $dataFile > $vtk
+
+#########################
+# y finalmente limiamos nuestro relajo.
+#########################
+do_cmd rm -f $toDelete
+
+
+echo "Finished writing $vtk"
+
+
+ 

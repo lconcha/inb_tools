@@ -1,0 +1,36 @@
+#!/bin/bash
+
+current_idx=$1
+total_idx=$2
+
+declare -i index
+index=1
+for arg in "$@"
+do
+	case "$arg" in
+	  -init)
+	    nextarg=`expr $index + 1`
+	    eval string=\${${nextarg}}
+	    echo "$string"
+	    exit 1
+	  ;;	
+	  -end)
+	    nextarg=`expr $index + 1`
+	    eval string=\${${nextarg}}
+	    tput sc
+	    echo "  [ 100  % done ]   "
+	    tput rc
+	    echo "$string"
+	    exit 1
+	  ;;
+	esac
+	index=$[$index+1]
+done
+
+
+
+
+nhashes=$[$current_idx*100/$total_idx]
+tput sc
+echo -n "  [ $nhashes  % done ]   "
+tput rc

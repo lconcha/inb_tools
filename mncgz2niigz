@@ -1,0 +1,12 @@
+#!/bin/bash
+source ~/noelsoft/BashTools/my_do_cmd
+
+mncgz=$1
+niigz=$2
+
+nii=${niigz%.gz}
+mnc=${mncgz%.gz}
+
+my_do_cmd gunzip $mncgz
+my_do_cmd mnc2nii -quiet $mnc $nii
+my_do_cmd gzip -v $mnc $nii

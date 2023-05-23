@@ -1,0 +1,19 @@
+#!/bin/bash
+
+source `which my_do_cmd`
+
+
+dtiIN=$1
+dtiOUT=$2
+bvecsIN=$3
+bvecsOUT=$4
+
+
+
+y
+#echo eddy_correct $dtiIN $dtiOUT 0
+my_do_cmd eddy_correct $dtiIN $dtiOUT 0
+
+#echo rotbvecs $bvecsIN $bvecsOUT ${dtiOUT%.nii.gz}.ecclog
+my_do_cmd  rotbvecs $bvecsIN $bvecsOUT ${dtiOUT%.nii.gz}.ecclog
+

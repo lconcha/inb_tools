@@ -1,0 +1,10 @@
+#!/bin/bash
+
+public=`wget -q -O  - ifconfig.me/ip`
+private_eth0=`ifconfig eth0 | grep inet | awk '{print $2}' | sed 's/addr://'`
+private_wlan0=`ifconfig wlan0 | grep inet | awk '{print $2}' | sed 's/addr://'`
+
+echo "IPs are:
+   public: $public
+   eth0:   $private_eth0
+   wlan0:  $private_wlan0"

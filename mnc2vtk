@@ -1,0 +1,49 @@
+#!/bin/bash
+
+mnc=$1
+vtk=$2
+dataName=$3
+
+
+
+
+fileType="BINARY"
+dataFormat="float"
+
+sizez=`mincinfo -dimlength zspace $mnc`
+sizey=`mincinfo -dimlength yspace $mnc`
+sizex=`mincinfo -dimlength xspace $mnc`
+
+
+originz=`mincinfo -attvalue zspace:start $mnc`
+originy=`mincinfo -attvalue yspace:start $mnc`
+originx=`mincinfo -attvalue xspace:start $mnc`
+
+dimsz=`mincinfo -attvalue zspace:step $mnc`
+dimsy=`mincinfo -attvalue yspace:step $mnc`
+dimsx=`mincinfo -attvalue xspace:step $mnc`
+
+nPoints=`echo "$sizez * $sizey * $sizex" | bc`
+
+min=`mincstats -min $mnc | awk '{print $NF}'`
+max=`mincstats -max $mnc | awk '{print $NF}'`
+echo "Range: $min $max"
+
+printf '%s\n' '# vtk DataFile Version 3.0' | tee $vtk
+printf '%s\n' 'volume' | tee -a $vtk
+printf '%s\n' $fileType | tee -a $vtk
+printf '%s\n' 'DATASET STRUCTURED_POINTS' | tee -a $vtk
+printf '%s %d %d %d\n' 'DIMENSIONS' $sizex $sizey $sizez | tee -a $vtk
+printf '%s %f %f %f\n' 'ORIGIN' $originx $originy $originz | tee -a $vtk
+printf '%s %f %f %f\n' 'SPACING' $dimsx $dimsy $dimsz | tee -a $vtk
+printf '%s %d\n' 'POINT_DATA' $nPoints | tee -a $vtk
+printf '%s %s %s %d\n' 'SCALARS ' $dataName $dataFormat 1 | tee -a $vtk
+printf '%s\n' 'LOOKUP_TABLE default' | tee -a $vtk
+
+
+
+minctoraw -normalize -float $mnc >> $vtk
+#mnc2nii $mnc tmp.nii
+#nifti_tool -copy_im -prefix tmp2.hdr -infiles tmp.nii
+#cat tmp2.img >> $vtk
+#rm tmp2* tmp.nii

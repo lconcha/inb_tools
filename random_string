@@ -1,0 +1,18 @@
+#!/bin/bash
+
+
+# random_string 
+# returns a random string, of course
+
+
+#user=`whoami`
+#machine=`uname -n`
+#tstring=`date '+%m%d%y'`
+tstring2=`date '+%N'`
+tstring2=`echo $tstring2 | md5sum | md5sum`
+tstring2="${tstring2:1:8}"
+rstring=${tstring2}_$$
+
+#rstring=${user}_${machine}_${tstring}_${rstring}
+
+echo $rstring

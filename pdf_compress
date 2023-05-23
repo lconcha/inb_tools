@@ -1,0 +1,48 @@
+#!/bin/bash
+
+### defaults
+resolution=600
+##############
+
+print_help() {
+	echo "
+  `basename $0` [options] <in.pdf> <out.pdf>
+   
+  -resolution <int>  Desired resolution for bitmaps in output.
+                     Default=$resolution
+"
+}
+
+if [ $# -lt 1 ] 
+then
+       print_help
+		 exit 1
+fi
+
+
+for arg in "$@"
+do
+  case "$arg" in
+  -h|-help) 
+    print_help
+    exit 1
+  ;;
+    -resolution)
+    resolution=$2
+    shift;shift
+    echo "    Desired resolution is $resolution"
+   ;;
+  esac
+done
+
+
+
+
+in=$1
+out=$2
+
+pdf2djvu -d $resolution $in -o /tmp/djvu_tmp.djvu
+djvups /tmp/djvu_tmp.djvu /tmp/djvu_tmp2.ps
+ps2pdf /tmp/djvu_tmp2.ps $out
+
+rm -f /tmp/djvu*

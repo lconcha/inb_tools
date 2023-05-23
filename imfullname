@@ -1,0 +1,23 @@
+#!/bin/bash
+
+
+im=$1
+
+
+im=`remove_ext $im`
+
+if [ `imtest $im` -eq 0 ]
+then
+  echo "Not found: $im"
+  exit 0
+fi
+
+if [ -f ${im}.nii ]
+then
+  readlink -f ${im}.nii
+elif [ -f ${im}.nii.gz ]
+then
+  readlink -f ${im}.nii.gz
+else
+  echo "File extension not recognized"
+fi

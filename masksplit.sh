@@ -42,7 +42,18 @@ echo "There are $nOnesInMask voxels in $mask"
 
 split -l $nvoxels ${tmpDir}/voxels.txt ${tmpDir}/splitvoxels_
 nVolumes=$(ls ${tmpDir}/splitvoxels_* | wc -l)
-echo "Split into $nVolumes volumes, each with $nvoxels voxels."
+echo "Split into $nVolumes volumes, each with $nvoxels voxels or less."
+
+if [ $nVolumes -eq 1 ]
+then
+	echolor orange "[WARN] The number of split volumes is one. No advantage in splitting"
+  echolor orange "       Try reducing nvoxels to a number lower than $nOnesInMask"
+  echolor orange "       Will continue, but there is no advantage in doing this"
+  my_do_cmd mrconvert $mask $mask4D -axes 0,1,2,-1
+  rm -fR $tmpDir
+  exit 0
+fi
+
 
 n=0
 for f in ${tmpDir}/splitvoxels_*
@@ -68,5 +79,5 @@ done
 mrcat -quiet -axis 3 ${tmpDir}/splitvoxels_*.mif $mask4D
 
 
-rm -fR $tmpDir
+#rm -fR $tmpDir
 echo "Done."

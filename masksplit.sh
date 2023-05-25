@@ -61,7 +61,7 @@ do
   done < <(cat $f)
   
 
-  my_do_cmd mredit $voxelsToEdit ${f}.mif 
+  mredit $voxelsToEdit ${f}.mif 
   
 done
 

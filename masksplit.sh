@@ -36,7 +36,7 @@ mask4D=$3
 tmpDir=$(mktemp -d)
 
 mrcalc -quiet -datatype bit $mask 0 -gt - | \
-maskdump - ${tmpDir}/voxels.txt
+maskdump - > ${tmpDir}/voxels.txt
 nOnesInMask=$(wc -l ${tmpDir}/voxels.txt | awk '{print $1}')
 echo "There are $nOnesInMask voxels in $mask"
 
@@ -49,7 +49,7 @@ for f in ${tmpDir}/splitvoxels_*
 do
   n=$(( $n +1 ))
   
-  my_do_cmd mrcalc  $mask 0 -mul ${f}.mif
+  mrcalc -quiet  $mask 0 -mul ${f}.mif
   
   voxelsToEdit=" "
   while read v
@@ -59,7 +59,7 @@ do
   done < <(cat $f)
   
 
-  my_do_cmd mredit $voxelsToEdit ${f}.mif 
+  mredit $voxelsToEdit ${f}.mif 
   
 done
 

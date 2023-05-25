@@ -49,6 +49,31 @@ then
 fi
 
 
+response=""
+while getopts "r:" options
+do
+  case $options in
+    r)
+      response_file=${OPTARG}
+      if [ ! -f $response ]; then 
+        echo "Error: File does not exist: $response "
+        exit 2
+      fi
+      response=$(cat $response_file | awk '{OFS = "," ;print $1,$2}')
+      echolor green "[INFO] Response provided is $response"
+      shift;shift
+    ;;
+    :)
+      echo "Error: -${OPTARG} requires an argument."
+      exit 2
+    ;;
+    *)
+      echo "Error: Unknown option"
+      exit 2
+    ;;
+  esac
+done
+
 
 
 dwi=$1
@@ -65,13 +90,15 @@ echolor yellow "
   outbase                   : $outbase
 "
 
-tmpDir=`mktemp -d`
 
+tmpDir=`mktemp -d`
+echolor green "Created $tmpDir"
 
 cat $bvec $bval > ${tmpDir}/bvalbvec
 transpose_table.sh ${tmpDir}/bvalbvec > ${tmpDir}/schemeorig
 awk '{printf "%.5f %.5f %.5f %.4f\n", $1,$2,$3,$4}' ${tmpDir}/schemeorig > ${outbase}.scheme
 scheme=${outbase}.scheme
+
 
 
 shells=`mrinfo -quiet -bvalue_scaling false -grad $scheme $dwi -shell_bvalues`
@@ -88,24 +115,26 @@ fi
 #dwi2mask -grad $scheme $dwi $fullmask
 
 
-my_do_cmd dti \
-  -mask $mask \
-  -response 0 \
-  -correction 0 \
-  -fa -md \
-  $dwi \
-  $scheme \
-  ${outbase}
-
-
-nAnisoVoxels=`fslstats ${outbase}_DTInolin_ResponseAnisotropicMask.nii -V | awk '{print $1}'`
-if [ $nAnisoVoxels -lt 1 ]
+if [ -z "$response" ]
 then
-  echolor red "[ERROR] Not enough anisotropic voxels found for estimation of response. Found $nAnisoVoxels"
+  my_do_cmd dti \
+    -mask $mask \
+    -response 0 \
+    -correction 0 \
+    -fa -md \
+    $dwi \
+    $scheme \
+    ${outbase}
+  nAnisoVoxels=`fslstats ${outbase}_DTInolin_ResponseAnisotropicMask.nii -V | awk '{print $1}'`
+  if [ $nAnisoVoxels -lt 1 ]
+  then
+    echolor red "[ERROR] Not enough anisotropic voxels found for estimation of response. Found $nAnisoVoxels"
+  fi
+  echolor yellow "Getting lambdas for response (from $nAnisoVoxels voxels)"
+  response=`cat ${outbase}_DTInolin_ResponseAnisotropic.txt | awk '{OFS = "," ;print $1,$2}'`
 fi
-echolor yellow "Getting lambdas for response (from $nAnisoVoxels voxels)"
-response=`cat ${outbase}_DTInolin_ResponseAnisotropic.txt | awk '{OFS = "," ;print $1,$2}'`
-echolor yellow "  $response"
+
+echolor yellow "Response:  $response"
 
 
 my_do_cmd mdtmrds \
@@ -113,9 +142,9 @@ my_do_cmd mdtmrds \
   $scheme \
   ${outbase} \
   -correction 0 \
-  -response $response \
+  -response "$response" \
   -mask $mask \
-  -modsel bic \
+  -modsel all \
   -each \
   -intermediate \
   -fa -md -mse \

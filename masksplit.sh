@@ -47,6 +47,7 @@ echo "Split into $nVolumes volumes, each with $nvoxels voxels."
 n=0
 for f in ${tmpDir}/splitvoxels_*
 do
+  echo "" >> $f
   n=$(( $n +1 ))
   
   mrcalc -quiet  $mask 0 -mul ${f}.mif
@@ -54,12 +55,13 @@ do
   voxelsToEdit=" "
   while read v
   do
+    if [ -z "$v" ]; then continue;fi
     vv=${v// /,}
     voxelsToEdit="$voxelsToEdit -voxel $vv 1 "
   done < <(cat $f)
   
 
-  mredit $voxelsToEdit ${f}.mif 
+  my_do_cmd mredit $voxelsToEdit ${f}.mif 
   
 done
 

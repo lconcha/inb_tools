@@ -1,4 +1,5 @@
 #!/bin/bash
+source `which my_do_cmd`
 
 function help(){
 echo "
@@ -46,19 +47,19 @@ echo "Split into $nVolumes volumes, each with $nvoxels voxels."
 n=0
 for f in ${tmpDir}/splitvoxels_*
 do
-  
   n=$(( $n +1 ))
   
-  mrcalc -quiet $mask 0 -mul ${f}.mif
+  my_do_cmd mrcalc  $mask 0 -mul ${f}.mif
   
-  voxelsToEdit=""
+  voxelsToEdit=" "
   while read v
   do
     vv=${v// /,}
-    voxelsToEdit="-voxel $vv 1 "
+    voxelsToEdit="$voxelsToEdit -voxel $vv 1 "
   done < <(cat $f)
   
-  mredit $voxelsToEdit ${f}.mif 
+
+  my_do_cmd mredit $voxelsToEdit ${f}.mif 
   
 done
 

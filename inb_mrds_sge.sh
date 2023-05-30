@@ -27,7 +27,7 @@ n_voxels_per_job : Number of voxels to estimate MRDS per job.
                    Recommended value: 100 to 1000 (divide the number of voxels in your mask
                    by the number of jobs you desire, considering the capabilities of your 
                    computing cluster).
-scractsh_dir     : A temporary directory to put the partial results before being
+scratch_dir     : A temporary directory to put the partial results before being
                    concatenated into the outbase_ files.
                    Needs to be a cluster-accessible folder (i.e., somewhere in /misc).
 

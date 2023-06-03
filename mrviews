@@ -1,0 +1,29 @@
+#!/bin/bash
+
+print_help(){
+echo "
+mrviews <image1> [image2] [image3 [...]]
+
+Show several images (any format compatible with mrview) in multiple windows, all synced.
+
+
+LU15 (0N(H4
+INB, UNAM
+June 2023
+lconcha@unam.mx
+"
+}
+
+
+if [ $# -lt 1 ]
+then
+  echo "ERROR: Need at least one image to display."
+  print_help
+  exit 2
+fi
+
+
+for im in $@
+do
+  mrview -sync.focus $im &
+done

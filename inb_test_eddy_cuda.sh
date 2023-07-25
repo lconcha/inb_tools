@@ -11,7 +11,7 @@ if [ ! -z "$eddynotfound" ]
 then
   echo "ERROR. eddy_cuda9.1 not found in PATH."
   echo $notfound
-  echo "  try typing: fsl602"
+  echo "  try typing: fsl6"
   exit 2
 fi
 
@@ -19,7 +19,7 @@ if [ ! -z "$nocuda" ]
 then
   echo "ERROR. Cuda not found."
   echo $notfound
-  echo "  try typing: source /home/inb/lconcha/fmrilab_software/tools/inb_config_cuda9.sh"
+  echo "  try typing: source /home/inb/soporte/inb_tools/inb_config_cuda9.sh"
   exit 2
 fi
 

@@ -17,7 +17,7 @@ INB, UNAM
 }
 
 
-fname_whiteList=/home/inb/lconcha/fmrilab_software/tools/inb_cluster_whiteList.txt
+fname_whiteList=/home/inb/soporte/inb_cluster_whiteList.txt
 echo "White list: $fname_whiteList"
 
 host_group="@allhosts"
@@ -98,7 +98,7 @@ do
   ######################
   if [ $this_ping_OK -eq 1 ]
   then
-    ssh $h /home/inb/lconcha/fmrilab_software/tools/fmrilab_check_NFS.sh $verbosity
+    ssh $h /misc/mansfield/lconcha/code/admin_tools/fmrilab_check_NFS.sh $verbosity
   fi
   ######################
 

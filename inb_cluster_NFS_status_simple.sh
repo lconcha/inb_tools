@@ -98,7 +98,7 @@ do
   ######################
   if [ $this_ping_OK -eq 1 ]
   then
-    ssh $h /misc/mansfield/lconcha/code/admin_tools/fmrilab_check_NFS.sh $verbosity
+    ssh $h fmrilab_check_NFS.sh $verbosity
   fi
   ######################
 

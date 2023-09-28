@@ -54,7 +54,7 @@ Flip diffusion gradient vector components:
 
 NOTES:
 
-The version of eddy used is explicitly set to eddy_cuda9.1. If not configured
+The version of eddy used is explicitly set to eddy_cuda10.2. If not configured
 properly, the script will gracefully exit with error.
 
 Requires:
@@ -148,7 +148,7 @@ date
 echo "[INFO] Running on $HOSTNAME"
 
 ## check that we can run CUDA
-thisoutput=`eddy_cuda9.1 2>&1 | grep "shared libraries"`
+thisoutput=`eddy_cuda10.2 2>&1 | grep "shared libraries"`
 if [ ! -z "$thisoutput" ]
 then
   echo $thisoutput
@@ -320,7 +320,7 @@ then
   #  exit 2
   #fi
 
-  my_do_cmd eddy_cuda9.1 --verbose \
+  my_do_cmd eddy_cuda10.2 --verbose \
     --imain=$dwi \
     --mask=$mask \
     --acqp=$acqp \

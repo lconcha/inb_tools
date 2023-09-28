@@ -140,8 +140,6 @@ echo "       $list_of_inputs"
 echo "[INFO] outbase is $outbase"
 echo "[INFO]" nthreads is $nthreads
 
-tmpDir=tmp_$$
-mkdir $tmpDir
 
 
 date
@@ -156,6 +154,21 @@ then
   echo "[ERROR] Cannot run eddy_cuda on $HOSTNAME, please configure it."
   exit 2
 fi 
+
+## check that we can run N4
+thisoutput=`N4BiasFieldCorrection --version 2>&1 | grep "ANTs Version"`
+if [ -z "$thisoutput" ]
+then
+  echo $thisoutput
+  echo "[ERROR] ANTs is not OK."
+  echo "[ERROR] Cannot run N4BiasFieldCorrection on $HOSTNAME, please configure it."
+  exit 2
+fi 
+
+
+tmpDir=tmp_$$
+mkdir $tmpDir
+
 
 
 ## Concatenate inputs

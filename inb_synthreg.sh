@@ -124,24 +124,24 @@ echo "[INFO]  outbase: $outbase"
 
 
 
-fixed_seg=${outbase}_fixed_seg.nii
+fixed_seg=${outbase}_fixed_seg.nii.gz
 echolor cyan "[INFO] Segmentation of $fixed"
 echolor cyan "[INFO]    This will create $fixed_seg"
 my_do_cmd mri_synthseg \
    --threads $threads \
    --i $fixed \
    --o $fixed_seg \
-   --resample ${outbase}_fixed_resampled.nii
+   --resample ${outbase}_fixed_resampled.nii.gz
 
 
-moving_seg=${outbase}_moving_seg.nii
+moving_seg=${outbase}_moving_seg.nii.gz
 echolor cyan "[INFO] Segmentation of $moving"
 echolor cyan "[INFO]    This will create $moving_seg"
 my_do_cmd mri_synthseg \
    --threads $threads \
    --i $moving \
    --o $moving_seg \
-   --resample ${outbase}_moving_resampled.nii
+   --resample ${outbase}_moving_resampled.nii.gz
 
 
 if [ $doCortexOnly -eq 1 ]

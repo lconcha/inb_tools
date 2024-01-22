@@ -47,6 +47,13 @@ print_help () {
 }
 
 
+if [ $# -lt 1 ]
+then
+  echolor red "Not enough arguments"
+  print_help
+  exit 0
+fi
+
 for arg in "$@"
 do
   case "${arg}" in
@@ -57,10 +64,20 @@ do
     -fixed)
         fixed=$2
         shift;shift;
+        if [ -z "$fixed" ]
+        then
+          echolor red "[ERROR] No argument provided for -fixed"
+          exit 2
+        fi
     ;;
     -moving)
         moving=$2
         shift;shift;
+        if [ -z "$moving" ]
+        then
+          echolor red "[ERROR] No argument provided for -moving"
+          exit 2
+        fi
     ;;
     -outbase)
         outbase=$2
@@ -84,9 +101,23 @@ do
   esac
 done
 
+
+isOK=1
+for f in $fixed $moving
+do
+  if [ -f "$f" ]
+  then
+    echo "."
+  else
+    echolor red "[ERROR] File not found: $f"
+    isOK=0
+  fi
+done
+
+if [ $isOK -eq 0 ]; then exit 2; fi
+
+
 echo "[INFO]  Running on $threads threads"
-
-
 echo "[INFO]  fixed  : $fixed"
 echo "[INFO]  moving : $moving"
 echo "[INFO]  outbase: $outbase"

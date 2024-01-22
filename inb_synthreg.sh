@@ -146,11 +146,11 @@ my_do_cmd mri_synthseg \
 
 if [ $doCortexOnly -eq 1 ]
 then
-   my_do_cmd mrcalc $fixed_seg 42 -999 -replace 3 -999 -replace -999 -eq ${outbase}_fixed_seg_cortex.nii
-   fixed_seg=${outbase}_fixed_seg_cortex.nii
+   my_do_cmd mrcalc $fixed_seg 42 -999 -replace 3 -999 -replace -999 -eq ${outbase}_fixed_seg_cortex.nii.gz
+   fixed_seg=${outbase}_fixed_seg_cortex.nii.gz
 
-   my_do_cmd mrcalc $moving_seg 42 -999 -replace 3 -999 -replace -999 -eq ${outbase}_moving_seg_cortex.nii
-   moving_seg=${outbase}_moving_seg_cortex.nii
+   my_do_cmd mrcalc $moving_seg 42 -999 -replace 3 -999 -replace -999 -eq ${outbase}_moving_seg_cortex.nii.gz
+   moving_seg=${outbase}_moving_seg_cortex.nii.gz
 fi
 
 

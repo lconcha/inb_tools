@@ -169,8 +169,8 @@ mv -v ${outbase}Warped.nii.gz ${outbase}_seg_Warped.nii.gz
 my_do_cmd antsApplyTransforms -d 3 \
   -i $moving \
   -r $fixed \
-  -t ${outbase}0GenericAffine.mat \
   -t ${outbase}1Warp.nii.gz \
+  -t ${outbase}0GenericAffine.mat \
   -o ${outbase}Warped.nii.gz \
   -v -u int
 

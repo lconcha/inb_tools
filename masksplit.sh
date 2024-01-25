@@ -35,6 +35,9 @@ mask4D=$3
 
 tmpDir=$(mktemp -d)
 
+mrconvert $mask ${tmpDir}/mask.mif
+mask=${tmpDir}/mask.mif
+
 mrcalc -quiet -datatype bit $mask 0 -gt - | \
 maskdump - > ${tmpDir}/voxels.txt
 nOnesInMask=$(wc -l ${tmpDir}/voxels.txt | awk '{print $1}')
@@ -58,26 +61,31 @@ fi
 n=0
 for f in ${tmpDir}/splitvoxels_*
 do
-  echo "" >> $f
+
   n=$(( $n +1 ))
   
-  mrcalc -quiet  $mask 0 -mul ${f}.mif
-  
-  voxelsToEdit=" "
-  while read v
-  do
-    if [ -z "$v" ]; then continue;fi
-    vv=${v// /,}
-    voxelsToEdit="$voxelsToEdit -voxel $vv 1 "
-  done < <(cat $f)
-  
+  # echo "" >> $f
+  # voxelsToEdit=" "
+  # echo looping
+  # while read v
+  # do
+  #   if [ -z "$v" ]; then continue;fi
+  #   vv=$(echo $v | awk 'BEGIN {OFS = ","} {print $1,$2,$3}')
+  #   voxelsToEdit="$voxelsToEdit -voxel $vv 1 "
+  # done < <(cat $f)
+  # echo endloop
+ 
+  voxelsToEdit=" -voxel $(awk 'BEGIN {OFS = ","} {print $1,$2,$3" 1"}' $f | \
+  sed ':a;N;$!ba;s/\n/ -voxel /g')"
 
-  mredit $voxelsToEdit ${f}.mif 
+  echo " [$n / $nVolumes] creating ${f}.mif"
+  mrcalc -quiet  $mask 0 -mul ${f}.mif
+  mredit $voxelsToEdit ${f}.mif
   
 done
 
 mrcat -quiet -axis 3 ${tmpDir}/splitvoxels_*.mif $mask4D
 
 
-#rm -fR $tmpDir
+rm -fR $tmpDir
 echo "Done."

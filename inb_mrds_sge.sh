@@ -16,9 +16,13 @@ Requires: SGE, fsl_sub
 
 
 How to use:
-  `basename $0` [options] <dwi> <bvec> <bval> <mask> <outbase> <n_voxels_per_job> <scratch_dir>
+  `basename $0` [options] <dwi> <scheme> <mask> <outbase> <n_voxels_per_job> <scratch_dir>
 
 Provide all image files as .nii or .nii.gz (dwi and mask).
+
+<scheme> is a nx4 file with bvecs and bvals, a-la mrtrix grad table. Make sure that the
+         vector orientations are correct by first examining output of the command dti,
+         specifically the PDD_CARTESIAN file by displaying it as fixels in mrview.
 
 n_voxels_per_job : Number of voxels to estimate MRDS per job. 
                    If your mask has 1000 voxels and n_voxels_per_job=100, then
@@ -74,6 +78,7 @@ then
   exit 2
 fi
 
+export SGE_O_SHELL=/bin/bash
 
 response=""
 keep_tmp=0
@@ -97,7 +102,7 @@ do
     ;;
     k)
       echolor green "[INFO] Will not remove temp directory."
-      keep_tmp=0
+      keep_tmp=1
       shift
     ;;
     *)
@@ -110,18 +115,16 @@ done
 
 
 dwi=$1
-bvec=$2
-bval=$3
-mask=$4
-outbase=$5
-n_voxels_per_job=$6
-scratch_dir=$7
+scheme=$2
+mask=$3
+outbase=$4
+n_voxels_per_job=$5
+scratch_dir=$(readlink -f $6)
 
 
 echolor yellow "
   dwi                       : $dwi
-  bvec                      : $bvec
-  bval                      : $bval
+  scheme                    : $scheme
   mask                      : $mask
   outbase                   : $outbase
   n_voxels_per_job          : $n_voxels_per_job
@@ -131,10 +134,6 @@ echolor yellow "
 tmpDir=`mktemp -d -p $scratch_dir`
 
 
-cat $bvec $bval > ${tmpDir}/bvalbvec
-transpose_table.sh ${tmpDir}/bvalbvec > ${tmpDir}/schemeorig
-awk '{printf "%.5f %.5f %.5f %.4f\n", $1,$2,$3,$4}' ${tmpDir}/schemeorig > ${outbase}.scheme
-scheme=${outbase}.scheme
 
 
 shells=`mrinfo -quiet -bvalue_scaling false -grad $scheme $dwi -shell_bvalues`
@@ -176,23 +175,42 @@ echo "nVolsROI is $nVolsROI"
 
 #### JOB: Calculate MRDS
 list_mrds_jobs=${tmpDir}/mrds_job_array
-for frame in $(seq 0 $(($nVolsROI -1)))
+echo "date" > $list_mrds_jobs; # the very first job always fails inexplicably
+for frame in $(seq -f "%05g" 0 $(($nVolsROI -1)))
 do
-    thismask=${tmpDir}/mask_${frame}.nii
-    mrconvert -coord 3 $frame ${tmpDir}/mask4D.nii $thismask
+    this_frame_job=${tmpDir}/job_frame_${frame}
+    thismask=${tmpDir}/mask_${frame}.nii.gz
+    mrconvert -quiet -coord 3 $frame ${tmpDir}/mask4D.nii $thismask
    
-    echo "mdtmrds \
+    echo "
+    #!/bin/bash 
+    echo "Working on \${HOSTNAME}"
+    echo "Shell is \$SHELL"
+    echo "check mrinfo"
+    which mrinfo
+    echo "ok lets go"
+
+    local_tmpDir=/tmp/mrds_$(whoami)_${RANDOM}
+    mkdir -pv \$local_tmpDir
+
+    mdtmrds \
     $dwi \
     $scheme \
-    ${tmpDir}/mrds_job_${frame} \
+    \${local_tmpDir}/mrds_job_${frame} \
     -correction 0 \
     -response $response \
     -mask $thismask \
-    -modsel all \
-    -each \
-    -intermediate \
+    -modsel bic \
     -fa -md -mse \
-    -method diff 1" >> $list_mrds_jobs
+    -method diff 1
+    
+    gzip \${local_tmpDir}/*.nii
+    cp \${local_tmpDir}/*.nii.gz ${tmpDir}/
+    rm -fR \${local_tmpDir}
+    
+    " > $this_frame_job
+    chmod +x $this_frame_job
+    echo $this_frame_job >> $list_mrds_jobs
 done
 
 nVols=`wc -l $list_mrds_jobs`
@@ -203,19 +221,29 @@ echolor cyan "[INFO] Job ID for array of mrds jobs: $jidPar"
 #### JOB: Concatenate
 concatenate_mrds_job=${tmpDir}/mrds_job_concatenate
 echo "#!/bin/bash
-for f in ${tmpDir}/mrds_job_0_MRDS*.nii
+    echo "Working on \${HOSTNAME}"
+    echo "Shell is \$SHELL"
+    echo "check mrinfo"
+    which mrinfo
+    echo "ok lets go"
+
+tmpDir=\$(mktemp -d)
+for f in ${tmpDir}/mrds_job_00001_MRDS_*.nii.gz
 do
   ndim=\$(mrinfo -ndim \$f)
   ff=\$(basename \$f)
-  fout=${outbase}_\${ff#mrds_job_?_}.gz
-  mrcat -axis \$ndim \${f/_0_/*} - | mrmath -axis \$ndim - sum \$fout
+  fout=${outbase}_\${ff#mrds_job_00001_}
+  echo fout is \$fout
+  mrcat -quiet -axis \$ndim \${f/_00001_/*} \${tmpDir}/\${ff}
+  mrmath -quiet -axis \$ndim \${tmpDir}/\${ff} sum \$fout
 done
+rm -fR \${tmpDir}
 " > $concatenate_mrds_job
 chmod +x $concatenate_mrds_job
 echolor green "--------- $concatenate_mrds_job --------"
 cat $concatenate_mrds_job
 echolor green "-- END -- $concatenate_mrds_job --------"
-jidCat=$(fsl_sub -j $jidPar -s smp,4 -N mrdsCat -l $tmpDir $concatenate_mrds_job)
+jidCat=$(fsl_sub -j $jidPar -N mrdsCat -l $tmpDir $concatenate_mrds_job)
 echolor cyan "[INFO] Job ID for concatenating mrds files: $jidCat and is waiting for $jidPar to finish"
 
 
@@ -227,6 +255,7 @@ if [ $keep_tmp -eq 0 ]; then
   echo "#!/bin/bash
   rm -fR $tmpDir
   " > $delete_job
+  chmod +x $delete_job
   fsl_sub -j $jidCat -N mrdsDel -l $tmpDir $delete_job
 else
   echolor green "[INFO] Will not delete $tmpDir"

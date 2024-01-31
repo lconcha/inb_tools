@@ -163,6 +163,7 @@ then
   echolor yellow "Getting lambdas for response (from $nAnisoVoxels voxels)"
   response=`cat ${outbase}_DTInolin_ResponseAnisotropic.txt | awk '{OFS = "," ;print $1,$2}'`
 fi
+gzip -v ${outbase}*.nii
 
 echolor yellow "Response:  $response"
 

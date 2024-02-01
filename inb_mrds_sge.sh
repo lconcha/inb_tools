@@ -185,11 +185,7 @@ do
    
     echo "
     #!/bin/bash 
-    echo "Working on \${HOSTNAME}"
-    echo "Shell is \$SHELL"
-    echo "check mrinfo"
-    which mrinfo
-    echo "ok lets go"
+
 
     local_tmpDir=/tmp/mrds_$(whoami)_${RANDOM}
     mkdir -pv \$local_tmpDir
@@ -222,11 +218,7 @@ echolor cyan "[INFO] Job ID for array of mrds jobs: $jidPar"
 #### JOB: Concatenate
 concatenate_mrds_job=${tmpDir}/mrds_job_concatenate
 echo "#!/bin/bash
-    echo "Working on \${HOSTNAME}"
-    echo "Shell is \$SHELL"
-    echo "check mrinfo"
-    which mrinfo
-    echo "ok lets go"
+
 
 tmpDir=\$(mktemp -d)
 for f in ${tmpDir}/mrds_job_00001_MRDS_*.nii.gz
@@ -235,15 +227,15 @@ do
   ff=\$(basename \$f)
   fout=${outbase}_\${ff#mrds_job_00001_}
   echo fout is \$fout
-  mrcat -quiet -axis \$ndim \${f/_00001_/*} \${tmpDir}/\${ff}
-  mrmath -quiet -axis \$ndim \${tmpDir}/\${ff} sum \$fout
+  mrcat -quiet -axis \$ndim \${f/_00001_/*} \${tmpDir}/\${ff%.nii.gz}.mif
+  mrmath -quiet -axis \$ndim \${tmpDir}/\${ff%.nii.gz}.mif sum \$fout
 done
 rm -fR \${tmpDir}
 " > $concatenate_mrds_job
 chmod +x $concatenate_mrds_job
-echolor green "--------- $concatenate_mrds_job --------"
-cat $concatenate_mrds_job
-echolor green "-- END -- $concatenate_mrds_job --------"
+#echolor green "--------- $concatenate_mrds_job --------"
+#cat $concatenate_mrds_job
+#echolor green "-- END -- $concatenate_mrds_job --------"
 jidCat=$(fsl_sub -j $jidPar -N mrdsCat -l $tmpDir $concatenate_mrds_job)
 echolor cyan "[INFO] Job ID for concatenating mrds files: $jidCat and is waiting for $jidPar to finish"
 

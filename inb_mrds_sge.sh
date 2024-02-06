@@ -131,7 +131,14 @@ echolor yellow "
   scratch_dir               : $scratch_dir
 "
 
-tmpDir=`mktemp -d -p $scratch_dir`
+if [ ! -d $scratch_dir ]
+then
+  echolor red "[ERROR] scratch_dir does not exist: $scratch_dir"
+  exit 2
+fi
+
+tmpDir=$(mktemp -d --tmpdir=${scratch_dir})
+echolor cyan "[INFO] tmpDir is $tmpDir"
 
 
 
@@ -181,7 +188,7 @@ for frame in $(seq -f "%05g" 0 $(($nVolsROI -1)))
 do
     this_frame_job=${tmpDir}/job_frame_${frame}
     thismask=${tmpDir}/mask_${frame}.nii.gz
-    mrconvert -quiet -coord 3 $frame ${tmpDir}/mask4D.nii $thismask
+    my_do_cmd mrconvert -quiet -coord 3 $frame ${tmpDir}/mask4D.nii $thismask
    
     echo "
     #!/bin/bash 

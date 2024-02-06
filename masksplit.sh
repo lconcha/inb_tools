@@ -84,6 +84,8 @@ do
   
 done
 
+
+echo "   Writing mask4D: $mask4D"
 mrcat -quiet -axis 3 ${tmpDir}/splitvoxels_*.mif $mask4D
 
 

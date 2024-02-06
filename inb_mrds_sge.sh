@@ -131,9 +131,22 @@ echolor yellow "
   scratch_dir               : $scratch_dir
 "
 
-if [ -z $(which mdtmrds) ]
+
+commands_to_check="mdtmrds pigz"
+
+isOK=1
+for comm in $commands_to_check
+do
+  echo "Looking for $comm"
+  if ! command -v $comm &> /dev/null
+  then
+      echolor red "[ERROR] Command not found: $comm"
+      isOK=0
+  fi
+done
+
+if [ $isOK -eq 0 ]
 then
-  echolor red "[ERROR] Cannot find executable: mdtmrds"
   exit 2
 fi
 
@@ -172,6 +185,7 @@ then
     $dwi \
     $scheme \
     ${outbase}
+  echolor yellow "[INFO] Command dti has finished"
   nAnisoVoxels=`fslstats ${outbase}_DTInolin_ResponseAnisotropicMask.nii -V | awk '{print $1}'`
   if [ $nAnisoVoxels -lt 1 ]
   then
@@ -180,16 +194,20 @@ then
   echolor yellow "Getting lambdas for response (from $nAnisoVoxels voxels)"
   response=`cat ${outbase}_DTInolin_ResponseAnisotropic.txt | awk '{OFS = "," ;print $1,$2}'`
 fi
-gzip -v ${outbase}*.nii
+
+echolor yellow "[INFO] Gzipping all nii files that start with $outbase"
+pigz -v ${outbase}*.nii
 
 echolor yellow "Response:  $response"
 
 
 my_do_cmd masksplit.sh $mask $n_voxels_per_job ${tmpDir}/mask4D.nii
-
 nVolsROI=$(mrinfo -size ${tmpDir}/mask4D.nii | awk '{print $4}')
 echo "nVolsROI is $nVolsROI"
 
+
+sleep_multiplier=1; #seconds to be multiplied by frame number
+                    # used to stagger jobs and avoid disk read
 
 #### JOB: Calculate MRDS
 list_mrds_jobs=${tmpDir}/mrds_job_array
@@ -199,10 +217,15 @@ do
     this_frame_job=${tmpDir}/job_frame_${frame}
     thismask=${tmpDir}/mask_${frame}.nii.gz
     my_do_cmd mrconvert -quiet -coord 3 $frame ${tmpDir}/mask4D.nii $thismask
-   
+    
+    rand_in_range=$(shuf -i 1-${nVolsROI} -n 1)
+    this_sleep=$(mrcalc $rand_in_range $sleep_multiplier -mul)
+    echo "[INFO] Job $frame will sleep $this_sleep seconds to avoid disk read congestion"
+
     echo "
     #!/bin/bash 
 
+    sleep $this_sleep
 
     local_tmpDir=/tmp/mrds_$(whoami)_${RANDOM}
     mkdir -pv \$local_tmpDir
@@ -218,7 +241,7 @@ do
     -fa -md -mse \
     -method diff 1
     
-    gzip \${local_tmpDir}/*.nii
+    pigz \${local_tmpDir}/*.nii
     cp \${local_tmpDir}/*.nii.gz ${tmpDir}/
     rm -fR \${local_tmpDir}
     

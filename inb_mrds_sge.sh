@@ -131,11 +131,21 @@ echolor yellow "
   scratch_dir               : $scratch_dir
 "
 
+if [ -z $(which mdtmrds) ]
+then
+  echolor red "[ERROR] Cannot find executable: mdtmrds"
+  exit 2
+fi
+
+
 if [ ! -d $scratch_dir ]
 then
   echolor red "[ERROR] scratch_dir does not exist: $scratch_dir"
   exit 2
 fi
+
+
+
 
 tmpDir=$(mktemp -d --tmpdir=${scratch_dir})
 echolor cyan "[INFO] tmpDir is $tmpDir"

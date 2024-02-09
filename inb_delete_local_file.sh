@@ -6,7 +6,7 @@
 print_help() {
 echo 
 echo "
-     Delete a file in a remote folder of all nodes in the SGE cluster through ssh.
+     Delete a file in a remote folder of all nodes in the SGE cluster ir Canadathrough ssh.
      Useful to clean up files in /tmp
 
      Instructions:

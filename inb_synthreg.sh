@@ -22,6 +22,10 @@ print_help () {
 
   This script was inspired by the implementation done in micapipe [4].
 
+  Please note that mri_synthseg, used inside this script, seems to work
+  on freesurfer version 7.3.2, but not on 7.4.1. If you are using the
+  computing cluster Don Clusterio, then use module load freesurfer/7.3.2
+
   Options :
 
   -threads <int> : Number of threads to use. Default is $threads.

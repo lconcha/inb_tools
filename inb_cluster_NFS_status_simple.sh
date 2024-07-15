@@ -22,6 +22,7 @@ echo "White list: $fname_whiteList"
 
 host_group="@allhosts"
 hosts=`qstat -f | grep all.q | sort | awk -F@ '{print $2}' | awk '{print $1}'`
+uHosts=$(qstat -f -qs u | grep all.q | sort  | awk '{print $1}' | awk -F@ '{print $2}' | awk -F. '{print $1}' | xargs echo)
 
 
 
@@ -45,8 +46,7 @@ do
     i=$[$i+1]
 done
 
-whiteList=`cat $fname_whiteList`
-
+whiteList=`sort $fname_whiteList | tr '\n' ' '`
 
 
 for h in $hosts
@@ -63,7 +63,7 @@ do
     do
     if [[ "$hostNameShort" = "$w" ]]
     then
-      echo "  INFO: $hostNameShort is is whitelisted, will not check."
+      echo "  INFO: $hostNameShort is  whitelisted, will not check."
       isW=1
       break
     fi
@@ -72,6 +72,15 @@ do
     then
 	continue
     fi
+
+  for u in $uHosts
+  do
+   if [[ "$hostNameShort" = "$u" ]]
+    then
+      echo "  INFO: $hostNameShort is declared as unreachable by SGE, will not check."
+      break
+    fi
+  done
 
   this_ping_OK=0
   ping -c 1 -q $h > /dev/null && this_ping_OK=1
@@ -107,8 +116,8 @@ done
 
   echo "
   Note: [W] means a whitelisted or disabled mount point (not an error).
+  whitelist file is $fname_whiteList
 
     Whitelisted node(s)/mount(s): $whiteList
-
-  whitelist file is $fname_whiteList
+    Nodes recognized as down by SGE: $uHosts
   "

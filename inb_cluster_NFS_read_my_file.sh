@@ -43,9 +43,7 @@ then
 fi
 
 
-
-
-fname_whiteList=/home/inb/lconcha/fmrilab_software/tools/inb_cluster_whiteList.txt
+fname_whiteList=/home/inb/soporte/inb_cluster_whiteList.txt
 echo "White list: $fname_whiteList"
 
 host_group="@allhosts"
@@ -73,7 +71,7 @@ do
     i=$[$i+1]
 done
 
-whiteList=`cat $fname_whiteList`
+whiteList=`sort $fname_whiteList | tr '\n' ' '`
 
 
 

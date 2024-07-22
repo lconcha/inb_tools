@@ -7,6 +7,7 @@ echo "
 Options:
 
 -V     verbose.
+-t     timeout (seconds)
 -h     Print this.
 
 Luis Concha
@@ -32,18 +33,22 @@ skip=1
 
 
 verbosity=""
+tout=5;# seconds
 for arg in "$@"
 do
   case "$arg" in
     -V)
       verbosity="-V"
     ;;
+    -t)
+      tout=$2
+      shift;shift
+    ;;
     -h)
       help
       exit 0
     ;;
     esac
-    i=$[$i+1]
 done
 
 whiteList=`sort $fname_whiteList | tr '\n' ' '`
@@ -112,7 +117,11 @@ do
   ######################
   if [ $this_ping_OK -eq 1 -a $isW -eq 0 ]
   then
-    ssh $h /home/inb/soporte/admin_tools/fmrilab_check_NFS.sh $verbosity
+    timeout $tout ssh $h /home/inb/soporte/admin_tools/fmrilab_check_NFS.sh $verbosity
+  if [[ $? == 124 ]]                                                                             
+  then
+    echo "[ERROR] $h is taking longer than $tout seconds to respond."
+  fi 
   fi
   ######################
 

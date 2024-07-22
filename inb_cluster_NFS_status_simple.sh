@@ -58,6 +58,8 @@ echo ""
 
 whiteList=`sort $fname_whiteList | tr '\n' ' '`
 
+A="[            ]";
+
 
 for h in $hosts
 do
@@ -66,7 +68,9 @@ do
   then
    printf "\n--- %s :\n" $hostNameShort
   else
-   printf "|%15s: " $hostNameShort
+  B=$hostNameShort
+  echo -n "${A:0:-${#B}} $B ] "
+   #printf "|%15s: " $hostNameShort
     #printf "$hostNameShort\n"
   fi
     isW=0

@@ -78,6 +78,7 @@ do
    if [[ "$hostNameShort" = "$u" ]]
     then
       echo "  INFO: $hostNameShort is declared as unreachable by SGE, will not check."
+      isW=1
       break
     fi
   done

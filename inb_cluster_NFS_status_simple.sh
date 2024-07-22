@@ -66,7 +66,8 @@ do
   then
    printf "\n--- %s :\n" $hostNameShort
   else
-   printf "%15s: " $hostNameShort
+   printf "|%15s: " $hostNameShort
+    #printf "$hostNameShort\n"
   fi
     isW=0
     for w in $whiteList

@@ -19,7 +19,6 @@ INB, UNAM
 
 
 fname_whiteList=/home/inb/soporte/inb_cluster_whiteList.txt
-echo "White list: $fname_whiteList"
 
 host_group="@allhosts"
 hosts=`qstat -f | grep all.q | sort | awk -F@ '{print $2}' | awk '{print $1}'`
@@ -50,6 +49,12 @@ do
     ;;
     esac
 done
+
+
+
+echo "[INFO] White list: $fname_whiteList"
+echo "[INFO] timeout for a host to respond is $tout seconds"
+echo ""
 
 whiteList=`sort $fname_whiteList | tr '\n' ' '`
 

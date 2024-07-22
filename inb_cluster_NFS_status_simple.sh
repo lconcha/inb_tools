@@ -63,23 +63,27 @@ do
     do
     if [[ "$hostNameShort" = "$w" ]]
     then
-      echo "  INFO: $hostNameShort is  whitelisted, will not check."
+      echo "  $hostNameShort is  whitelisted, will not check."
       isW=1
       break
     fi
     done
     if [ $isW -eq 1 ]
     then
-	continue
+	    continue
     fi
 
   for u in $uHosts
   do
    if [[ "$hostNameShort" = "$u" ]]
     then
-      echo "  INFO: $hostNameShort is declared as unreachable by SGE, will not check."
+      echo "  $hostNameShort is declared as unreachable by SGE, will not check."
       isW=1
       break
+    fi
+    if [ $isW -eq 1 ]
+    then
+	    continue
     fi
   done
 
@@ -92,7 +96,7 @@ do
     do
       if [[ "$hostNameShort" == "$w" ]]
       then
-        echo "  INFO: $hostNameShort is down but it is whitelisted"
+        echo "  $hostNameShort is down but it is whitelisted"
         doWarn=0
         break
       fi
@@ -106,7 +110,7 @@ do
 
 
   ######################
-  if [ $this_ping_OK -eq 1 ]
+  if [ $this_ping_OK -eq 1 -a $isW -eq 0 ]
   then
     ssh $h /home/inb/soporte/admin_tools/fmrilab_check_NFS.sh $verbosity
   fi

@@ -58,7 +58,7 @@ echo ""
 
 whiteList=`sort $fname_whiteList | tr '\n' ' '`
 
-A="[            ]";
+A="[~~~~~~~~~~~~~~~~~~~~~]";
 
 
 for h in $hosts

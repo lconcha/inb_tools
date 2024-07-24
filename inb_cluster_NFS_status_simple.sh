@@ -140,6 +140,7 @@ done
 
   echo "
   Note: [W] means a whitelisted or disabled mount point (not an error).
+        [T] means time out, a host is not responding (maybe it is off?).
   whitelist file is $fname_whiteList
 
     Whitelisted node(s)/mount(s): $whiteList

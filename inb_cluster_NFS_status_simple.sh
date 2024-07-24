@@ -32,7 +32,7 @@ skip=1
 
 
 verbosity=""
-tout=5;# seconds
+tout=10;# seconds
 for arg in "$@"
 do
   case "$arg" in

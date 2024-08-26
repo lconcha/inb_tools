@@ -1,4 +1,4 @@
-red#!/bin/bash
+#!/bin/bash
 source `which my_do_cmd`
 fakeflag=""
 
@@ -15,7 +15,7 @@ Se recomienda que la carpeta se llame XDG, por ejemplo /misc/mansfield/${USER}/X
 }
 
 
-alias scpresume='rsync -avz --partial --progress --rsh=ssh'
+scpresume='rsync -avz --partial --progress --rsh=ssh'
 
 
 if [ $# -lt 1 ]
@@ -27,6 +27,7 @@ fi
 
 
 newXDG=$1
+newXDG=$(echo "$newXDG" | sed 's:/*$::'); # remove trailing slash
 
 if [ -z "${newXDG}" ]
 then
@@ -35,13 +36,12 @@ then
   exit 2
 fi
 
-mkdir -p ${newXDG}/.local || exit 2
+mkdir -p ${newXDG}/.local/{share,state} || exit 2
 
-my_do_cmd $fakeflag scpresume ~/.config ${newXDG}/
-my_do_cmd $fakeflag  scpresume ~/.cache  ${newXDG}/
-my_do_cmd $fakeflag  scpresume ~/.local/share ${newXDG}/
-my_do_cmd $fakeflag  scpresume ~/.local/state ${newXDG}/
-
+my_do_cmd $fakeflag $scpresume ~/.config ${newXDG}/
+my_do_cmd $fakeflag $scpresume ~/.cache  ${newXDG}/
+my_do_cmd $fakeflag $scpresume ~/.local/share ${newXDG}/.local/
+my_do_cmd $fakeflag $scpresume ~/.local/state ${newXDG}/.local/
 
 if [ -f ~/.pam_environment ]
 then
@@ -76,4 +76,24 @@ do
   echo "" 
 done
 
-echolor orange "Listo. Debes cerrar y abrir tu sesión para que surta efecto."
+for f in ~/.bash_profile ~/.bash_login
+do
+  if [ -f $f ]
+  then
+    echolor orange "[ADVERTENCIA] Tienes archivo $f."
+    echolor orange "              Necesitas borrarlo (pasa su contenido a ~/.bashrc)"
+    echolor orange "              Si no lo haces, tu sesión gráfica no podrá ser acelerada."
+  fi
+done
+
+if [ ! -f ~/.profile ]
+then
+  echo "Creando ~/.profile"
+  echo "#!/bin/bash" > ~/.profile
+fi
+
+thisfilepath=$(dirname $0)
+cat  ${thisfilepath}/inb_check_XDG.txt >> ~/.profile
+
+
+echolor cyan "Listo. Debes cerrar y abrir tu sesión para que surta efecto."

@@ -72,7 +72,7 @@ do
   #du -hs $carpeta
   cp -rv ${HOME}/$carpeta ${newXDG}/
   #echo mv -v ${HOME}/$carpeta ${carpeta}.bak
-  #echo ln -s ${newXDG}/${carpeta} ${HOME}/$carpeta
+  echo ln -s ${newXDG}/${carpeta} ${HOME}/$carpeta
   echo "" 
 done
 

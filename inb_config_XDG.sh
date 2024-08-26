@@ -70,9 +70,9 @@ do
     continue
   fi
   #du -hs $carpeta
-  echo cp -rv ${HOME}/$carpeta ${newXDG}/
-  echo mv -v ${HOME}/$carpeta ${carpeta}.bak
-  echo ln -s ${newXDG}/${carpeta} ${HOME}/$carpeta
+  cp -rv ${HOME}/$carpeta ${newXDG}/
+  #echo mv -v ${HOME}/$carpeta ${carpeta}.bak
+  #echo ln -s ${newXDG}/${carpeta} ${HOME}/$carpeta
   echo "" 
 done
 

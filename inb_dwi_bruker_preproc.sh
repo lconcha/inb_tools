@@ -14,6 +14,7 @@ flipZ=0
 keep_tmp=0
 nthreads=$(( $(getconf _NPROCESSORS_ONLN) -2 ))
 list_of_inputs=""
+phase_encode="0 -1 0"
 
 colorinfo="cyan"
 colorwarning="orange"
@@ -65,6 +66,10 @@ Options:
               Useful for eddy, as it is expecting human data, not from rodents.
 -m            Perform motion correction (mcflirt) before running eddy.
               This is useful for removing image drift during acquisition.
+-e            Phase encoding for eddy. Argument is a quoted list of numbers.
+              This is what goes into eddy acq.txt
+              Default: $phase_encode
+              Example, if j+ then this should be \"0 1 0\".
 
 
 Flip diffusion gradient vector components:
@@ -107,7 +112,7 @@ then
   nthreads=1
 fi
 
-while getopts i:o:s:c:dpmxyzt flag
+while getopts i:o:s:c:e:dpmxyzt flag
 do
     case "${flag}" in
         i) input_file=${OPTARG}
@@ -115,6 +120,7 @@ do
         o) outbase=${OPTARG};;
         d) doDesigner=1;;
         c) designer_container=${OPTARG};;
+        e) phase_encode=${OPTARG};;
         p) doPermute=1;;
         s) doScale=1
            scaleFactor=${OPTARG};;
@@ -361,7 +367,7 @@ acqp=${dwi%.nii.gz}_acqp.txt
 index=${dwi%.nii.gz}_index.txt
 c4topup=0.0438;# this is just a guess
 nvols=`fslnvols $dwi`
-echo "0 -1 0" $c4topup > $acqp
+echo "${phase_encode} $c4topup" > $acqp
 indx=""
 for ((i=1; i<=$nvols; i+=1)); do indx="$indx 1"; done
 echo $indx > $index

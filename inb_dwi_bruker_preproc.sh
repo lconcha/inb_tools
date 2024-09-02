@@ -1,6 +1,25 @@
 #!/bin/bash
 source `which my_do_cmd`
 
+# some defaults
+designer_container=/home/inb/soporte/lanirem_software/containers/designer2.sif
+
+doPermute=0
+doScale=0
+scaleFactor=10
+doFlips=0
+flipX=0
+flipY=0
+flipZ=0
+keep_tmp=0
+nthreads=$(( $(getconf _NPROCESSORS_ONLN) -2 ))
+list_of_inputs=""
+
+colorinfo="cyan"
+colorwarning="orange"
+colorerror="red"
+
+
 
 function help(){
 echo "
@@ -9,7 +28,8 @@ echo "
 Take one or more 2D-EPI DWI acquisitions and preprocess them according to:
 
 0. Concatenate the input DWIs if there is more than one input.
-1. dwidenoise (mrtrix, Exp2 estimator - Cordero-Grande 2019).
+1. dwidenoise (mrtrix, Exp2 estimator - Cordero-Grande 2019, or
+               optionally, designerv2).
 2. eddy (fsl), including eddy_quad for quality check
 3. bias-field correction (N4BiasFieldCorrection). Parameters set for rat imaging.
 
@@ -37,6 +57,9 @@ Outputs will be:
 
 Options:
 
+-d            Use designerv2 for denoising.
+-c            Full path for designer container.
+              Default: $designer_container
 -p            Permute axes to 0,2,1,3 (don't do it)
 -s <factor>   Scale the image voxel dimensions by some factor (e.g. 2, or 10).
               Useful for eddy, as it is expecting human data, not from rodents.
@@ -61,6 +84,8 @@ Requires:
   mrtrix >3.0.2
   fsl >6.0.2
 
+If using Designerv2, you need the singularity container and the singularity module.
+
 Tested on 2D-EPI DWI data from Bruker. Should work on 3D-EPI as well.
 Tested on rat data only so far. There are far better tools for human data (dwifslpreproc).
 Perhaps not suited for ex vivo data acquired with segmented 3D-EPI, but try for yourself.
@@ -77,31 +102,19 @@ lconcha@unam.mx
 
 
 
-colorinfo="cyan"
-colorwarning="orange"
-colorerror="red"
-
-list_of_inputs=""
-doPermute=0
-doScale=0
-scaleFactor=10
-doFlips=0
-flipX=0
-flipY=0
-flipZ=0
-keep_tmp=0
-nthreads=$(( $(getconf _NPROCESSORS_ONLN) -2 ))
 if [ $nthreads -lt 1 ]
 then
   nthreads=1
 fi
 
-while getopts i:o:s:pmxyzt flag
+while getopts i:o:s:c:dpmxyzt flag
 do
     case "${flag}" in
         i) input_file=${OPTARG}
            list_of_inputs="$list_of_inputs $input_file";;
         o) outbase=${OPTARG};;
+        d) doDesigner=1;;
+        c) designer_container=${OPTARG};;
         p) doPermute=1;;
         s) doScale=1
            scaleFactor=${OPTARG};;
@@ -164,6 +177,23 @@ then
   echo "[ERROR] Cannot run N4BiasFieldCorrection on $HOSTNAME, please configure it."
   exit 2
 fi 
+
+# Check that we can run designer
+if [ $doDesigner -eq 1 ]
+then
+  echolor $colorinfo "[INFO] Will denoise with designer"
+  if [ -z "$(which singularity)" ]
+  then
+    echo "[ERROR] Cannot find singularity. Perhaps: module load singularity ?"
+    exit 2
+  fi
+  if [ ! -f $designer_container ]
+  then
+    echo "[ERROR] Cannot find designer container: $designer_container"
+    exit 2
+  fi
+fi
+
 
 
 tmpDir=tmp_$$
@@ -261,19 +291,35 @@ fi
 
 
 ## Denoising
-echo "[INFO] Denoising "
 DWIdenoised=${outbase}_d.nii.gz
+echolor $colorinfo "[INFO] Looking for $DWIdenoised"
 if [ ! -f $DWIdenoised ]
 then
-  my_do_cmd dwidenoise -nthreads $nthreads  \
-            -estimator Exp2 $DWIconcatenated $DWIdenoised
+  echolor $colorinfo "[INFO] Denoising..."
+  if [ $doDesigner -eq 1 ]
+  then
+    echolor $colorinfo "[INFO] Denoising with designerv2"
+    singularity run --nv \
+    -B /misc \
+    -B /home/inb \
+    $designer_container \
+    designer \
+    -denoise \
+    $DWIconcatenated \
+    $DWIdenoised
+  else
+    echolor $colorinfo "[INFO] Denoising with dwidenoise"
+    my_do_cmd dwidenoise -nthreads $nthreads  \
+              -estimator Exp2 $DWIconcatenated $DWIdenoised
+  fi
   echo "[INFO] Copying bvals and bvecs for $DWIdenoised"
   cp -v $bval ${DWIdenoised%.nii.gz}.bval
   cp -v $bvec ${DWIdenoised%.nii.gz}.bvec
   bval=${DWIdenoised%.nii.gz}.bval
   bvec=${DWIdenoised%.nii.gz}.bvec
+
 else
-  echo "[INFO] Denoised image exists, not overwriting $DWIdenoised"
+  echolor $colorinfo "[INFO] Denoised image exists, not overwriting $DWIdenoised"
 fi
 
 

@@ -392,7 +392,6 @@ then
     --flm=movement \
     --slm=linear \
     --cnr_maps \
-    --fwhm=10,5,0,0,0 \
     --out=${outbase}_de
 
 

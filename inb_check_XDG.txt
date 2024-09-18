@@ -17,7 +17,7 @@ do
     echo "        $varname not properly setup. Check NFS."
     XDG_isOK=0
   fi
-done < <(grep 'XDG.*' ~/.pam_environment)
+done < <(grep '^XDG.*' ~/.pam_environment)
 
 if [ $XDG_isOK -eq 0 ]
 then

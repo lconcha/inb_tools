@@ -1,0 +1,38 @@
+#!/bin/bash
+
+if [ ! -f ~/.pam_environment ]
+then
+  exit 0
+fi
+
+
+#---------- check XDG in Don Clusterio -----------------------------#
+XDG_isOK=1
+while read line
+do
+  varname=$(echo $line | awk -F= '{print $1}')
+  location=$(echo $line | awk -F= '{print $2}')
+  #echo "Checking for $varname in $location"
+  timeout 1s ls -d $location &> /dev/null
+  if [ $? -eq 2 ]
+  then
+    echo "[ERROR] Directory necessary for $varname does not exist: $location"
+    XDG_isOK=0
+  fi
+  if [ $? -eq 124 ]
+  then
+    echo "[ERROR] Took too long to read, not trying anymore: $location"
+    echo "        $varname not properly setup. Check NFS."
+    XDG_isOK=0
+  fi
+done < <(grep '^XDG.*' ~/.pam_environment)
+
+if [ $XDG_isOK -eq 0 ]
+then
+  echo "[WARNING] Setting XDG folders to defaults."
+  export XDG_CONFIG_HOME=~/.config
+  export XDG_CACHE_HOME=~/.cache
+  export XDG_DATA_HOME=~/.local/share
+  export XDG_STATE_HOME=~/.local/state
+fi
+#---------- Finished checking XDG in Don Clusterio -----------------#

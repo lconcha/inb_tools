@@ -25,7 +25,7 @@ function check_ext () {
 
 
 function help () {
-echo "`$basename 0` -f fixel0 [-g fixel1] [-v x,y,z] -o output
+echo "inb_fixel_dotproduct.sh -f fixel0 [-g fixel1] [-v x,y,z] -o output
 
   Compute the voxel-wise dot product between:
     a) two vector fields (fixel0 and fixel1), or
@@ -43,10 +43,7 @@ echo "`$basename 0` -f fixel0 [-g fixel1] [-v x,y,z] -o output
 LU15 (0N(H4
 INB-UNAM
 Nov, 2024
-lconcha@unam.mx
-
- 
-"
+lconcha@unam.mx"
 }
 
 

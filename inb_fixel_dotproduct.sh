@@ -24,8 +24,42 @@ function check_ext () {
 }
 
 
+function help () {
+echo "`$basename 0` -f fixel0 [-g fixel1] [-v x,y,z] -o output
+
+  Compute the voxel-wise dot product between:
+    a) two vector fields (fixel0 and fixel1), or
+    b) a vector field  (fixel0) and a single vector specified as x,y,z components.
+
+  Vector fields can be in .nii, .nii.gz, or .mif formats.
+  Output MUST be .mif format.
+
+  -f    A vector field
+  -g    Another vector field
+  -v    A vector, specified as x,y,z
+  -o    Output file in .mif format
+  -h    Display this message.
+
+LU15 (0N(H4
+INB-UNAM
+Nov, 2024
+lconcha@unam.mx
+
+ 
+"
+}
+
+
+if [ $# -lt 1 ] 
+then
+	echo " ERROR: Need more arguments..."
+	help
+	exit 2
+fi
+
+
 is_static_vector=0
-while getopts f:g:v:o: flag
+while getopts f:g:v:o:h flag
 do
     case "${flag}" in
         f) input_file=${OPTARG}
@@ -38,6 +72,8 @@ do
            fixel1=${OPTARG}
            echo "Provided static vector $fixel1";;
         o) fixeldotproduct=${OPTARG};;
+        h) help
+           exit;;
     esac
 done
 

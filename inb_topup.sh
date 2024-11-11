@@ -71,7 +71,7 @@ print_help()
   is scaled accordingly.
   -fake
   -keep_tmp
-  -cuda            : Run Eddy with eddy_cuda9.1
+  -cuda            : Run Eddy with eddy_cuda
 
   LU15 (0N(H4
   INB, UNAM
@@ -249,7 +249,7 @@ echo $indx > $txt_index
 
 if [ $doCuda -eq 1 ]
 then
-  cuda_cmd=eddy_cuda9.1
+  cuda_cmd=eddy_cuda
 else
   cuda_cmd=eddy
 fi

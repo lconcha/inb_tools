@@ -21,7 +21,8 @@ INB, UNAM
 fname_whiteList=/home/inb/soporte/inb_cluster_whiteList.txt
 
 host_group="@allhosts"
-hosts=`qstat -f | grep all.q | sort | awk -F@ '{print $2}' | awk '{print $1}'`
+hosts=`qhost | grep lx-amd64 | awk '{print $1}'`
+#hosts=`qstat -f | grep all.q | sort | awk -F@ '{print $2}' | awk '{print $1}'`
 #hosts=$(qconf -sel)
 uHosts=$(qstat -f -qs u | grep all.q | sort  | awk '{print $1}' | awk -F@ '{print $2}' | awk -F. '{print $1}' | xargs echo)
 

@@ -34,6 +34,7 @@ skip=1
 
 verbosity=""
 tout=20;# seconds
+do_timeout=1
 for arg in "$@"
 do
   case "$arg" in
@@ -44,6 +45,9 @@ do
       tout=$2
       shift;shift
     ;;
+    -T)
+      do_timeout=0
+    ;;
     -h)
       help
       exit 0
@@ -51,10 +55,16 @@ do
     esac
 done
 
+if [ $do_timeout -eq 1 ]
+then
+  to="timeout $tout"
+  echo "[INFO] timeout for a host to respond is $tout seconds"
+else
+  to=""
+fi
 
 
 echo "[INFO] White list: $fname_whiteList"
-echo "[INFO] timeout for a host to respond is $tout seconds"
 echo ""
 
 whiteList=`sort $fname_whiteList | tr '\n' ' '`
@@ -128,7 +138,7 @@ do
   ######################
   if [ $this_ping_OK -eq 1 -a $isW -eq 0 ]
   then
-    timeout $tout ssh $h /home/inb/soporte/admin_tools/fmrilab_check_NFS.sh $verbosity
+    $to ssh $h /home/inb/soporte/admin_tools/fmrilab_check_NFS.sh $verbosity
   if [[ $? == 124 ]]                                                                             
   then
     echo "[ERROR] $h is taking longer than $tout seconds to respond."

@@ -151,7 +151,8 @@ do
 done
 
   echo "
-  Note: [W] means a whitelisted or disabled mount point (not an error).
+  Note: [.] means it can correctly read a mount point in /misc (one per disk).
+        [W] means a whitelisted or disabled mount point (not an error).
         [T] means time out, a host is not responding (maybe it is off?).
   whitelist file is $fname_whiteList
 

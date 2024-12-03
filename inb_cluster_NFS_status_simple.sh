@@ -1,5 +1,10 @@
 #!/bin/bash
 
+verbosity=""
+tout=20;# seconds
+do_timeout=1
+
+
 function help() {
 echo "
 `basename $0` [Options].
@@ -7,7 +12,8 @@ echo "
 Options:
 
 -V     verbose.
--t     timeout (seconds)
+-t     timeout (default $tout seconds)
+-T     disable timeout (mutually exclusive with -t)
 -h     Print this.
 
 Luis Concha
@@ -33,9 +39,7 @@ i=1
 skip=1
 
 
-verbosity=""
-tout=20;# seconds
-do_timeout=1
+
 for arg in "$@"
 do
   case "$arg" in

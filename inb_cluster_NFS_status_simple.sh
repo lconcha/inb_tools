@@ -3,7 +3,7 @@
 verbosity=""
 tout=20;# seconds
 do_timeout=1
-
+mainserver="hahn"
 
 function help() {
 echo "
@@ -79,6 +79,10 @@ A="[~~~~~~~~~~~~~~~~~~~~~]";
 
 for h in $hosts
 do
+  if [[ "$h" == "$mainserver" ]]
+  then
+    continue
+  fi
   hostNameShort=`echo $h | awk -F. '{print $1}'`
   if [[ "${verbosity}" == "-V" ]]
   then

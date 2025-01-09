@@ -34,7 +34,7 @@ help() {
 }
 
 
-if [ ! $# -eq 3 ]
+if [ $# -lt 3 ]
 then
   echolor red "ERROR: Need three arguments"
 	help

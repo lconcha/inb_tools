@@ -1,4 +1,5 @@
 #!/bin/bash
+source `which my_do_cmd`
 
 help() {
   echo "
@@ -73,7 +74,7 @@ do
   echolor green "[INFO] Tensor $c, volumes $i to $j"
   mrconvert -quiet -coord 3 $i:$j $PDDs ${tmpDir}/PDD_${c}.mif
   mrconvert -quiet -coord 3 $c $METRIC ${tmpDir}/metric_${c}.mif
-  mrcalc ${tmpDir}/PDD_${c}.mif -abs 0 -gt - | mrmath -axis 3 - max - | mrcalc - "$epsilon" -mul ${tmpDir}/epsilon_${c}.mif
+  mrcalc ${tmpDir}/PDD_${c}.mif -abs 0 -gt - | mrmath -axis 3 - max - | mrcalc - $epsilon -mul ${tmpDir}/epsilon_${c}.mif
   #mrcalc ${tmpDir}/metric_${c}.mif -abs 0 -gt ${tmpDir}/hasvalue_${c}.mif
 
   mrcalc -quiet ${tmpDir}/PDD_${c}.mif \
@@ -85,6 +86,6 @@ done
 
 
 
-mrcat -quiet -axis 3 ${tmpDir}/scaled_PDD_*.mif $scaled_PDDs
+my_do_cmd mrcat -quiet -axis 3 ${tmpDir}/scaled_PDD_*.mif $scaled_PDDs
 
 rm -fR $tmpDir

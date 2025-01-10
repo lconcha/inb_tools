@@ -12,7 +12,7 @@ Uses multi-threading, avoid running multiple jobs at the same time.
 
 
 How to use:
-  `basename $0` <dwi> <bvec> <bval> <mask> <outbase>
+  `basename $0` <dwi> <scheme> <mask> <outbase>
 
 Provide all image files as .nii or .nii.gz (dwi and mask).
 
@@ -41,7 +41,7 @@ lconcha@unam.mx
 }
 
 
-if [ $# -lt 5 ]
+if [ $# -lt 4 ]
 then
   echolor red "Not enough arguments"
 	help
@@ -77,15 +77,13 @@ done
 
 
 dwi=$1
-bvec=$2
-bval=$3
-mask=$4
-outbase=$5
+scheme=$2
+mask=$3
+outbase=$4
 
 echolor yellow "
   dwi                       : $dwi
-  bvec                      : $bvec
-  bval                      : $bval
+  scheme                    : $scheme
   mask                      : $mask
   outbase                   : $outbase
 "
@@ -94,10 +92,14 @@ echolor yellow "
 tmpDir=`mktemp -d`
 echolor green "Created $tmpDir"
 
-cat $bvec $bval > ${tmpDir}/bvalbvec
-transpose_table.sh ${tmpDir}/bvalbvec > ${tmpDir}/schemeorig
-awk '{printf "%.5f %.5f %.5f %.4f\n", $1,$2,$3,$4}' ${tmpDir}/schemeorig > ${outbase}.scheme
-scheme=${outbase}.scheme
+#cat $bvec $bval > ${tmpDir}/bvalbvec
+#transpose_table.sh ${tmpDir}/bvalbvec > ${tmpDir}/schemeorig
+#awk '{printf "%.5f %.5f %.5f %.4f\n", $1,$2,$3,$4}' ${tmpDir}/schemeorig > ${outbase}.scheme
+#scheme=${outbase}.scheme
+
+# remove non-vector lines from the scheme file (comments)
+sed '/^s*#/ d' $scheme > ${tmpDir}/dwi.scheme
+scheme=${tmpDir}/dwi.scheme
 
 
 

@@ -150,7 +150,7 @@ scratch_dir=$(readlink -f $6)
 
 
 queue=all.q
-nVoxelsToWork=$(mrstats -quiet -ignorezero $mask -output count)
+nVoxelsToWork=$(mrstats -quiet -mask $mask $mask -output count)
 nSlots=$(qstat -g c -q $queue | tail -n 1 | awk '{print $5}')
 nJobsToCreate=$(mrcalc $nVoxelsToWork $n_voxels_per_job -div -round)
 echolor green "[INFO] Mask contains $nVoxelsToWork voxels"

@@ -47,6 +47,7 @@ Options:
 -m <int>           Maximum number of jobs to create. Default is 100.
 -t <int>           Number of threads per job (requested to SGE. Default is 4).
 -f                 Fake it. Will show how the jobs will be split, but will not run.
+-p <str>           Parallel environment available in SGE. Options are smp (default) and openmp
 
 
 
@@ -90,10 +91,11 @@ keep_tmp=0
 max_jobs_to_create=100
 nThreads=4
 fakeit=0
+pe=smp
 ## end defaults
 
 
-while getopts "r:kc:m:t:f" options
+while getopts "r:kc:m:t:fp:" options
 do
   case $options in
     r)
@@ -129,6 +131,9 @@ do
     ;;
     f)
       fakeit=1
+    ;;
+    p)
+      pe=${OPTARG}
     ;;
     *)
       echo "Error: Unknown option $options"
@@ -326,7 +331,7 @@ done
 
 nVols=`wc -l $list_mrds_jobs`
 echolor reverse "  Submitting $nVols mrds jobs"
-jidPar=$(fsl_sub -s smp,$nThreads -N mrdsPar -l $tmpDir -t $list_mrds_jobs)
+jidPar=$(fsl_sub -s ${pe},$nThreads -N mrdsPar -l $tmpDir -t $list_mrds_jobs)
 echolor cyan "[INFO] Job ID for array of mrds jobs: $jidPar"
 
 #### JOB: Concatenate

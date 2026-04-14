@@ -11,11 +11,12 @@ source `which my_do_cmd`
 
 
 usage() {
+  echo ""
   echo "Usage: $0 [-a|--all] PATIENT_ID"
   echo "  -a, --all    retrieve all series for each study, not only T1 images"
   echo ""
   echo "Useful info:"
-  echo " + Images will be saved to /misc/tesla3/dicomdump/PATIENT_ID/"
+  echo " + Images will be saved to /misc/tesla3/dicomdump/PATIENTNAME_DATE_TIME/"
   echo " + PATIENT_ID is dicom tag (0010,0020) LO [85690] #   6, 1 PatientID"
   echo ""
   echo "LU15 (0N(H4"

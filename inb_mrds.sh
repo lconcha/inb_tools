@@ -68,6 +68,7 @@ do
       export OMP_NUM_THREADS=$nThreads
       echolor green "[INFO] Using $nThreads threads for MRDS"
       shift;shift
+    ;;
     :)
       echo "Error: -${OPTARG} requires an argument."
       exit 2

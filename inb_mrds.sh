@@ -50,7 +50,7 @@ fi
 
 
 response=""
-while getopts "r:" options
+while getopts "r:t:" options
 do
   case $options in
     r)
@@ -63,6 +63,11 @@ do
       echolor green "[INFO] Response provided is $response"
       shift;shift
     ;;
+    t)
+      nThreads=${OPTARG}
+      export OMP_NUM_THREADS=$nThreads
+      echolor green "[INFO] Using $nThreads threads for MRDS"
+      shift;shift
     :)
       echo "Error: -${OPTARG} requires an argument."
       exit 2

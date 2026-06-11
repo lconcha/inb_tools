@@ -59,7 +59,7 @@ echolor yellow "Number of tracks in input file: $nTracks"
 awk 'NR==FNR{if($1 ~ /^[0-9]+$/) a[$1+1]=1; next} {print (FNR in a) ? 1 : 0}' "$indices" <(seq 1 "$nTracks") > "$weights"
 
 
-
+# nthreads MUST BE ZERO or indexing goes to hell.
 my_do_cmd tckedit -nthreads 0 \
   -tck_weights_in $weights \
   -minweight 0.5 \

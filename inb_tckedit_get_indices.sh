@@ -61,6 +61,7 @@ echolor green "Number of tracks in input file: $nTracks"
 seq 1 "$nTracks"  > "$weights"
 
 
+# nthreads MUST BE ZERO or indexing goes to hell.
 my_do_cmd tckedit -nthreads 0  \
   "$criteria" \
   -tck_weights_in $weights \
